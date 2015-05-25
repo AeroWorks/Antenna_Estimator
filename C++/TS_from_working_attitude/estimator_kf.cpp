@@ -108,7 +108,7 @@ if (KFvair<5 && KFvair>0.1){
 
 	double q_add = pow(a_LS * sqrt(fabs(v_wind)) + b_LS * fabs(KFphi),(1.0/9.0));
 
-	double q_z=1.0+0.1*q_add; //0.1
+	double q_z=0.8+0.1*q_add; //0.1
 
 	q = q + q_add;
 
@@ -214,8 +214,8 @@ void EstimatorKF::KF_UpdateEstimate() { // updates latest position estimate by n
 		<< 0.0<< pow(0.7*r_b, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << endr
 		<< 0.0 << 0.0 << pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << endr
 		<< 0.0 << 0.0 << 0.0 << pow(0.7*r_b, 2.0) << 0.0 << 0.0 << endr
-		<< 0.0 << 0.0 << 0.0 << 0.0 << pow(0.2*r_a, 2.0) << 0.0 << endr
-		<< 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << pow(0.05*r_b, 2.0) << endr;
+		<< 0.0 << 0.0 << 0.0 << 0.0 << pow(0.15*r_a, 2.0) << 0.0 << endr
+		<< 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << pow(0.02*r_b, 2.0) << endr;
 
 	mat H(6, 6);
 	H.eye();
@@ -523,7 +523,7 @@ KF_MeasurementCheck(remoteGlobalPosition);
 
 	vair_old = KFvair;
 	xhat_old = xhat;
-	std::cout<<"xhat: "<<xhat<<std::endl;
+	//std::cout<<"xhat: "<<xhat<<std::endl;
 
 
 }else{
@@ -550,10 +550,10 @@ void EstimatorKF::KF_MeasurementCheck(GlobalPos remoteGlobalPosition) {
 }
 
 void EstimatorKF::KF_OutputCheck(){
-	if (fabs(xhat(0) - xhat_old(0)) > 1000
-					|| fabs(xhat(2) - xhat_old(2)) > 1000
-					|| fabs(xhat(4) - xhat_old(4)) > 1000) {
-				//if true: position output makes a step of 1000 meters --> take old estimation
+	if (fabs(xhat(0) - xhat_old(0)) > 500
+					|| fabs(xhat(2) - xhat_old(2)) > 500
+					|| fabs(xhat(4) - xhat_old(4)) > 500) {
+				//if true: position output makes a step of 500 meters --> take old estimation
 
 		xhat=xhat_old;
 			}
