@@ -41,6 +41,8 @@ private:
 	arma::vec GPS_pos_vel;			// GPS position & velocity measurement
 	arma::vec GPS_pos_vel_old;		// save last measurement
 	arma::mat P;	 				// covariance matrix declaration
+	arma::mat R;					// R matrix
+	arma::mat S_init;				// save initialization value of S
 
 	double phi_current;		// roll angle phi
 	double phi_old;			// save old roll angle phi
@@ -55,8 +57,10 @@ private:
 
 	double dt;
 
+	bool firstMeasurementCheck;		// check if it is the first measurement check
+	bool firstOutputCheck;			// check if it is the first output check
+
 public:
-	//arma::vec xhat; 				// state declaration ------------------------ just for debugging
 
 	bool newAttitude;				// check if new attitude available
 	bool newPosition;				// check if new position available
@@ -76,7 +80,7 @@ public:
 	void KF_Attitude();				// case ONLY new attitude available
 	void KF_NoNewInformation();		// case NO new information available
 
-	void KF_MeasurementCheck(GlobalPos remoteGlobalPosition);		// check for reasonable input
+	void KF_MeasurementCheck(GlobalPos remoteGlobalPosition, double getEstimate_time);		// check for reasonable input
 	void KF_OutputCheck();			// check for reasonable output
 	void KF_Reset();				// set all KF values to init
 

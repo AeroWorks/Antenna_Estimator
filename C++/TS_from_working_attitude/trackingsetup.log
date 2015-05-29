@@ -1,0 +1,48 @@
+2015-05-26 10:19:47 - [INFO] TrackingSetup started
+2015-05-26 10:19:47 - [INFO] Configuration successfully read from "trackingsetup.cfg"
+2015-05-26 10:19:47 - [INFO] starting GUI backend server on port 6556
+2015-05-26 10:19:47 - [INFO] Using GPS position from configuration as antenna position
+2015-05-26 10:19:47 - [INFO] Starting control loop...
+2015-05-26 10:19:47 - [INFO] Magnetic declination: 1.86636
+2015-05-26 10:19:47 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:47 - [ERROR] Unable to open interface (-3): device not found
+2015-05-26 10:19:47 - [ERROR] MavlinkReader :: Could not open serial port 3DR radio
+2015-05-26 10:19:47 - [INFO] Changing to mode MAPPING ESTIMATION
+2015-05-26 10:19:47 - [INFO] TARecorder: Successfully opened datarecording_1432628387.csv. Start recording.
+2015-05-26 10:19:47 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:47 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:47 - [DEBUG] findNorth: Recording magnetometer readings...
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:48 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:49 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:50 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:51 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:51 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:51 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:51 - [DEBUG] Not yet updating estimator (no global position received so far)
+2015-05-26 10:19:51 - [DEBUG] Not yet updating estimator (no global position received so far)

@@ -395,7 +395,9 @@ int main(int argc, char** argv) {
 						trackingLog.log(vl_DEBUG, "Not updating estimator anymore");
 						estimateUpdated = false;
 						remotePosEstimator.KF_Reset();			//Reset KF (15 seconds after last measurement)
-						// motorSetpoints.tiltValue = 90;		//Set tilt position
+
+						motorSetpoints.tiltCtrltype = ct_abspos; 	//Set tilt position
+						motorSetpoints.tiltValue = 90;
 
 					}
 

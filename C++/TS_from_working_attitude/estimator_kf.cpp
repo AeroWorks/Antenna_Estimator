@@ -13,7 +13,7 @@
 
 namespace tracking {
 
-EstimatorKF::EstimatorKF() { 								//constructor: initialize parameters at first call of class
+EstimatorKF::EstimatorKF() { 	//constructor: initialize parameters at first call of class
 
 		//constant values
 		gravity = 9.81;
@@ -35,19 +35,9 @@ EstimatorKF::EstimatorKF() { 								//constructor: initialize parameters at fir
 
 		xhat_old =xhat;
 
-		GPS_pos_vel << 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr;
+		GPS_pos_vel = xhat;
 
-		GPS_pos_vel_old << 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr;
+		GPS_pos_vel_old = xhat;
 
 		P 	<< r_a << 0 << 0 << 0 << 0 << 0 << endr
 			<< 0 << r_b << 0 << 0 << 0 << 0 << endr
@@ -55,6 +45,15 @@ EstimatorKF::EstimatorKF() { 								//constructor: initialize parameters at fir
 			<< 0 << 0 << 0 << r_b << 0 << 0 << endr
 			<< 0 << 0 << 0 << 0 << r_a << 0 << endr
 			<< 0 << 0 << 0 << 0 << 0 << r_b << endr;
+
+		R 	<< pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << endr
+			<< 0.0<< pow(0.7*r_b, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << endr
+			<< 0.0 << 0.0 << pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << endr
+			<< 0.0 << 0.0 << 0.0 << pow(0.7*r_b, 2.0) << 0.0 << 0.0 << endr
+			<< 0.0 << 0.0 << 0.0 << 0.0 << pow(0.15*r_a, 2.0) << 0.0 << endr
+			<< 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << pow(0.015*r_b, 2.0) << endr;
+
+		S_init=P+R;
 
 		KFphi=0.0;
 		phi_current = 0.0;
@@ -70,7 +69,8 @@ EstimatorKF::EstimatorKF() { 								//constructor: initialize parameters at fir
 		newPosition = false;
 		newVfrHud = false;
 		isEstimating=false;
-
+		firstMeasurementCheck=true;
+		firstOutputCheck=true;
 	}
 
 EstimatorKF::~EstimatorKF() {
@@ -86,6 +86,24 @@ void EstimatorKF::KF_readConfig(Config trackingConfig){ // read config files
 	q = trackingConfig.Estimator.q; 					//0.0025;
 	a_LS = trackingConfig.Estimator.a_LS; 				//0.05;
 	b_LS = trackingConfig.Estimator.b_LS; 				//0.01;
+
+	// TODO: check if necessary
+
+	P 	<< r_a << 0 << 0 << 0 << 0 << 0 << endr
+		<< 0 << r_b << 0 << 0 << 0 << 0 << endr
+		<< 0 << 0 << r_a << 0 << 0 << 0 << endr
+		<< 0 << 0 << 0 << r_b << 0 << 0 << endr
+		<< 0 << 0 << 0 << 0 << r_a << 0 << endr
+		<< 0 << 0 << 0 << 0 << 0 << r_b << endr;
+
+	R 	<< pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << endr
+		<< 0.0<< pow(0.7*r_b, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << endr
+		<< 0.0 << 0.0 << pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << endr
+		<< 0.0 << 0.0 << 0.0 << pow(0.7*r_b, 2.0) << 0.0 << 0.0 << endr
+		<< 0.0 << 0.0 << 0.0 << 0.0 << pow(0.15*r_a, 2.0) << 0.0 << endr
+		<< 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << pow(0.015*r_b, 2.0) << endr;
+
+	S_init=P+R;
 }
 
 void EstimatorKF::KF_PredictEstimate() { // predicts position and velocity from given data
@@ -93,15 +111,18 @@ void EstimatorKF::KF_PredictEstimate() { // predicts position and velocity from 
 // 0.1 calculation of turn rate omega ----------------------------------------------
 	double v_total2 = pow(xhat(1),2) + pow(xhat(3),2) + pow(xhat(5),2); //calculate total velocity^2
 
-	if(v_total2<1e-5){		// prevent nan error!!!!!
-		v_total2=1e-5;
+	if(v_total2<1e-4){		// prevent nan error!!!!!
+		v_total2=1e-4;
 	}
 
 	double omega = tan(KFphi) * gravity / sqrt(v_total2);
 
-// TODO 0.2 calculation q according to wind ----------------------------------------------
+// 0.2 calculation q according to wind ----------------------------------------------
+
+//TODO: check if airspeed is reliable enough to be taken for wind!!!!
+
 if (KFvair<5 && KFvair>0.1){
-	KFvair=10;		// in case no airspeed available, set KFvair to desired airspeed
+	KFvair=10;		// in case no airspeed available, set KFvair to assumed airspeed
 };
 
 	double v_wind = sqrt(v_total2) - fabs(KFvair);
@@ -128,7 +149,9 @@ if (KFvair<5 && KFvair>0.1){
 	mat Id_6(6, 6);
 	Id_6.eye();
 
-	mat F_d = Id_6 + F_c * dt + (F_c *F_c) * pow(dt, 2.0) / 2.0;
+	//mat F_d = Id_6 + F_c * dt + (F_c *F_c) * pow(dt, 2.0) / 2.0;
+	//TODO: check if approximation to first order is enough!!!!!!
+	mat F_d = Id_6 + F_c * dt;
 
 // 2. compute measurement covariance matrix Q  -----------------------------------------------------------
 
@@ -158,7 +181,10 @@ if (KFvair<5 && KFvair>0.1){
 	mat Id_12(12, 12);
 	Id_12.eye();
 
-	mat G = Id_12 + R_join * dt + (R_join * R_join) * pow(dt,2.0) / 2.0;
+	//mat G = Id_12 + R_join * dt + (R_join * R_join) * pow(dt,2.0) /2.0;
+	//TODO: check if approximation to first order is enough!!!!!!
+
+	mat G = Id_12 + R_join * dt;
 
 	mat F_dTQ_d(6, 6);
 	F_dTQ_d << G(0, 6) << G(0, 7) << G(0, 8) << G(0, 9) << G(0, 10) << G(0, 11) << endr
@@ -208,29 +234,46 @@ if (KFvair<5 && KFvair>0.1){
 
 void EstimatorKF::KF_UpdateEstimate() { // updates latest position estimate by new ground position, velocity
 
-// 1. Calculate R and H -----------------------------------------------------------
+// TODO: delete if not necessary: 1. Calculate R and H -----------------------------------------------------------
+	/*
 	mat R(6, 6);
 	R 	<< pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << endr
 		<< 0.0<< pow(0.7*r_b, 2.0) << 0.0 << 0.0 << 0.0 << 0.0 << endr
 		<< 0.0 << 0.0 << pow(0.8*r_a, 2.0) << 0.0 << 0.0 << 0.0 << endr
 		<< 0.0 << 0.0 << 0.0 << pow(0.7*r_b, 2.0) << 0.0 << 0.0 << endr
 		<< 0.0 << 0.0 << 0.0 << 0.0 << pow(0.15*r_a, 2.0) << 0.0 << endr
-		<< 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << pow(0.02*r_b, 2.0) << endr;
+		<< 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << pow(0.015*r_b, 2.0) << endr;
 
-	mat H(6, 6);
-	H.eye();
+	//mat H(6, 6);
+	//H.eye();
+*/
 
 // 2.1 Measurement residual -----------------------------------------------------------
 	vec Y(6);
-	Y = GPS_pos_vel - H * xhat;
+	//Y = GPS_pos_vel - H * xhat;
+	Y = GPS_pos_vel - xhat;
 
 // 2.2 Residual covariance -----------------------------------------------------------
 	mat S(6,6);
-	S = (H*P*H.t()) + R;
+	//S = (H*P*H.t()) + R;
+	S = P + R;
 
 // 2.3 Optimal Kalman gain -----------------------------------------------------------
+
+	//check if S is nearly singular. if true --> take initialization value
+	//TODO: check if reasonable approach
+
+	double det_S=1;
+	det_S=det(S);		// prevent singularity
+
+	if (det_S<1e-20){
+		S=S_init;
+	}
+
 	mat S_inv = inv(S);
-	mat K = ((P * (H.t())) * S_inv);
+	//mat K = ((P * (H.t())) * S_inv);
+
+	mat K = P * S_inv;
 
 // 2.4 Update (a posteriori) state estimate ------------------------------------------
 	xhat = xhat + K * Y;
@@ -239,8 +282,8 @@ void EstimatorKF::KF_UpdateEstimate() { // updates latest position estimate by n
 	mat Id_6(6, 6);
 	Id_6.eye();
 
-	P = (Id_6 - K * H) * P;
-
+	//P = (Id_6 - K * H) * P;
+	P = (Id_6 - K) * P;
 }
 
 void EstimatorKF::KF_Pos_Attitude() {// case new position & attitude available
@@ -326,12 +369,12 @@ void EstimatorKF::KF_Pos_Attitude() {// case new position & attitude available
 
 	}
 
+	KF_OutputCheck();
+
 	phi_old = phi_current;
-	GPS_pos_vel_old=GPS_pos_vel;
+	GPS_pos_vel_old = GPS_pos_vel;
 	KFlastTimestamp = KFcurrentTimestamp;
 	dt = 0.0;
-
-	KF_OutputCheck();
 
 	// velocity estimate is previous groundspeed measurement
 	//transform from NED to ENU
@@ -377,11 +420,11 @@ void EstimatorKF::KF_Pos() {	// case ONLY new position available
 	// predict
 	KF_PredictEstimate();
 
-	KFlastTimestamp = KFcurrentTimestamp;
-	GPS_pos_vel_old=GPS_pos_vel;
-	dt = 0.0;
-
 	KF_OutputCheck();
+
+	KFlastTimestamp = KFcurrentTimestamp;
+	GPS_pos_vel_old = GPS_pos_vel;
+	dt = 0.0;
 
 	// velocity estimate is previous groundspeed measurement
 	//transform from NED to ENU
@@ -393,6 +436,7 @@ void EstimatorKF::KF_Pos() {	// case ONLY new position available
 		targetEstimatedPosLocal_.x = xhat(2);
 		targetEstimatedPosLocal_.y = xhat(0);
 		targetEstimatedPosLocal_.z = xhat(4);
+
 // convert back to WGS84
 	antennaLocalCartesian_.Reverse(targetEstimatedPosLocal_.x,
 			targetEstimatedPosLocal_.y, targetEstimatedPosLocal_.z,
@@ -419,12 +463,11 @@ void EstimatorKF::KF_Attitude() {	// case ONLY new attitude available
 	// predict with new phi
 	KF_PredictEstimate();
 
+	KF_OutputCheck();
+
 	phi_old = phi_current;
-	//v_air_old = v_air_current;
 	KFlastTimestamp = KFcurrentTimestamp;
 	dt = 0.0;
-
-	KF_OutputCheck();
 
 	// velocity estimate is previous groundspeed measurement
 	//transform from NED to ENU
@@ -455,10 +498,10 @@ void EstimatorKF::KF_NoNewInformation() {	// case NO new information available
 
 	KF_PredictEstimate();
 
+	KF_OutputCheck();
+
 	KFlastTimestamp = KFcurrentTimestamp;
 	dt = 0.0;
-
-	KF_OutputCheck();
 
 	// velocity estimate is previous groundspeed measurement
 	//transform from NED to ENU
@@ -479,7 +522,7 @@ void EstimatorKF::KF_NoNewInformation() {	// case NO new information available
 
 }
 
-void EstimatorKF::getEstimate(GlobalPos remoteGlobalPosition,Attitude remoteAtt, VfrHud remoteVHud) {
+void EstimatorKF::getEstimate(GlobalPos remoteGlobalPosition,Attitude remoteAtt, VfrHud remoteVHud) {	// main function to get Estimate
 
 double getEstimate_time=get_usec();
 
@@ -487,7 +530,7 @@ double getEstimate_time=get_usec();
 if (getEstimate_time - remoteGlobalPosition.localTimestamp < 15*1e6){
 isEstimating=true;
 
-KF_MeasurementCheck(remoteGlobalPosition);
+KF_MeasurementCheck(remoteGlobalPosition, getEstimate_time);
 
 	if(newVfrHud){
 		setNewVfrHud(remoteVHud);
@@ -534,33 +577,88 @@ isEstimating=false;
 
 }
 
-void EstimatorKF::KF_MeasurementCheck(GlobalPos remoteGlobalPosition) {
+void EstimatorKF::KF_MeasurementCheck(GlobalPos remoteGlobalPosition, double getEstimate_time) {	// check if new measurement seems reasonable
+	// getEstimate_time: time right now
+	// remoteGlobalPosition.localTimestamp: time of last measurement
 
-	if (newPosition) {
+	if (!firstMeasurementCheck && newPosition) {
+
+		double dt_MeasurementCheck = (getEstimate_time - remoteGlobalPosition.localTimestamp)/1000000.0; // in s
+		double v_max_limit = 20; // absolute max speed possible (wind included) in m/s
+
 		setNewRemoteGPos(remoteGlobalPosition); // new position available
 
+		// absolute max distance possible to be covered in time between two measurements in m
+		double distance_max_limit = v_max_limit*dt_MeasurementCheck; //= 1000
+
 		//check if new measurement is reasonable
-		if (fabs(targetPosLocal_.x - GPS_pos_vel_old(0)) > 1000
-				|| fabs(targetPosLocal_.y - GPS_pos_vel_old(2)) > 1000
-				|| fabs(targetPosLocal_.z - GPS_pos_vel_old(4)) > 1000) {
-			//if true: position measurement makes a step of 1000 meters --> take old measurement
+		if (fabs(targetPosLocal_.x - GPS_pos_vel_old(0)) > distance_max_limit
+				|| fabs(targetPosLocal_.y - GPS_pos_vel_old(2)) > distance_max_limit
+				|| fabs(targetPosLocal_.z - GPS_pos_vel_old(4)) > distance_max_limit) {
+			//if true: position measurement seems not to be reasonable  --> discard this measurement
+
 			newPosition = false;
 		}
 	}
+
+	if(xhat(0)-xhat_old(0)==0 && xhat(1)-xhat_old(1)==0 && xhat(2)-xhat_old(2)==0 && xhat(3)-xhat_old(3)==0 && xhat(4)-xhat_old(4)==0 && xhat(5)-xhat_old(5)==0 &&xhat(6)-xhat_old(6)==0){
+		firstMeasurementCheck=true;
+	} else {
+		firstMeasurementCheck=false; // after initialization or new program start
+	}
 }
 
-void EstimatorKF::KF_OutputCheck(){
-	if (fabs(xhat(0) - xhat_old(0)) > 500
-					|| fabs(xhat(2) - xhat_old(2)) > 500
-					|| fabs(xhat(4) - xhat_old(4)) > 500) {
-				//if true: position output makes a step of 500 meters --> take old estimation
+void EstimatorKF::KF_OutputCheck(){	// check if estimated position seems reasonable
+	//check if first run
+	if(!firstOutputCheck){
+		double dt_OutputCheck = (KFcurrentTimestamp - KFlastTimestamp)/1000000.0; // in s
+		double v_max_limit = 20; // absolute max speed possible (wind included) in m/s
 
-		xhat=xhat_old;
-			}
+		// absolute max distance possible to be covered in time between two estimator executions in m
+		double distance_max_limit = v_max_limit*dt_OutputCheck; //=1000;
 
+		if (fabs(xhat(0) - xhat_old(0)) > distance_max_limit
+						|| fabs(xhat(2) - xhat_old(2)) > distance_max_limit
+						|| fabs(xhat(4) - xhat_old(4)) > distance_max_limit) {
+
+			// if true: new estimation seems not to be reasonable --> take estimation of forward prediction instead
+
+			// assume constant velocity
+			xhat(3)=xhat_old(3);
+			xhat(1)=xhat_old(1);
+			xhat(5)=xhat_old(5);
+
+			// predict with constant velocity
+			xhat(2)=xhat_old(2)+xhat_old(3)*dt_OutputCheck;
+			xhat(0)=xhat_old(0)+xhat_old(1)*dt_OutputCheck;
+			xhat(4)=xhat_old(4)+xhat_old(5)*dt_OutputCheck;
+
+			//transform from NED to ENU
+				targetEstimatedVel_.x = xhat(3);
+				targetEstimatedVel_.y = xhat(1);
+				targetEstimatedVel_.z = xhat(5);
+
+			// update based on ground speed
+				targetEstimatedPosLocal_.x = xhat(2);
+				targetEstimatedPosLocal_.y = xhat(0);
+				targetEstimatedPosLocal_.z = xhat(4);
+
+		// convert back to WGS84
+			antennaLocalCartesian_.Reverse(targetEstimatedPosLocal_.x,
+					targetEstimatedPosLocal_.y, targetEstimatedPosLocal_.z,
+					targetEstimatedPos_.lat, targetEstimatedPos_.lon,
+					targetEstimatedPos_.alt);
+				}
+		}
+
+	if(xhat(0)-xhat_old(0)==0 && xhat(1)-xhat_old(1)==0 && xhat(2)-xhat_old(2)==0 && xhat(3)-xhat_old(3)==0 && xhat(4)-xhat_old(4)==0 && xhat(5)-xhat_old(5)==0 &&xhat(6)-xhat_old(6)==0){
+		firstOutputCheck=true;
+	} else {
+		firstOutputCheck=false;
+	}
 }
 
-void EstimatorKF::KF_Reset(){
+void EstimatorKF::KF_Reset(){	// reset the important KF parameters to initial values if no measurement for a while
 
 		// variable values
 		xhat 	<< 0.0 << endr
@@ -577,12 +675,7 @@ void EstimatorKF::KF_Reset(){
 				<< 0.0 << endr
 				<< 0.0 << endr;
 
-		GPS_pos_vel_old << 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr
-				<< 0.0 << endr;
+		GPS_pos_vel_old = GPS_pos_vel;
 
 		P 	<< r_a << 0 << 0 << 0 << 0 << 0 << endr
 			<< 0 << r_b << 0 << 0 << 0 << 0 << endr
@@ -605,6 +698,8 @@ void EstimatorKF::KF_Reset(){
 		newPosition = false;
 		newVfrHud = false;
 		isEstimating=false;
+		firstMeasurementCheck=true;
+		firstOutputCheck=true;
 
 	}
 
